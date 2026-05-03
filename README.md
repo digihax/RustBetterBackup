@@ -1,50 +1,74 @@
 # RustBetterBackup
 
-This is public, but is NOT quite ready for use.  But it's close.  If you're comfortable editing a batch file, you can pretty easily make it work 
-in your environment.  The *only* thing remaining: Check the path's around line 74, to make sure they'll capture your server instances.
-I hardcoded late last night, and haven't switched/updated/corrected the variables.  That's really all that needs to be done.  It's running 
-like a champ.
+RustBetterBackup is a Windows batch script for keeping rotating backups of a Rust server instance and its Oxide install folder.
 
-DESCRIPTION
+The script is intended for self-hosted Windows Rust servers where the default backup folders are hard to identify or restore from. Each backup slot receives a timestamp file, an `Oxide` copy, and a `Server1` copy so you can restore the server state from a known point in time.
 
-This script is designed for Windows-based Rust servers
+## What It Backs Up
 
-I have not had much success "rolling back" to a prior state with the default facepunch backups.  Probably user error, but, when every backup folder has the same
-name, it's a bit hard to know which one is even the right one.
+- The Rust server instance directory configured as `ServerDir`
+- The Oxide directory under the configured Rust install root
+- A `TimeStamp.txt` file in each backup slot
 
-This script backs up your Oxide folder, as well as your Server instance folder.  It creates a file with the time stamp in the root of the backup folder, so you 
-know exactly when that backup was created.  Because it backs up Oxide and your Server, you should be able to restore to any point in time that you have a backup for.
+Backups are stored under:
 
-INSTRUCTIONS
+```text
+<RustDir>\BetterBU
+```
 
-*BACKING UP*
+## Requirements
 
-Edit the following lines as needed:
+- Windows
+- A Rust dedicated server install
+- Enough disk space for the configured number of backup slots
+- Permission to read the Rust/Oxide folders and write to the backup folder
 
-     :: === EDIT DIRECTORIES for your install location
-     @set RustDir=r:\rustserver
-     @set ServerDir=r:\rustserver\server\server1
+## Configuration
 
-     :: EDIT the number of daily backups you want to create (Default is 12, every 2 hours)
-     @set /A D=12
-     :: Number of days in a week to do backups
-     @set /A W=4
-     :: Backup Folder to start in (must be in the range of D * W
-     @set /A C=7
-     
-*RESTORING A BACKUP*
+Edit these values near the top of `RustBetterBU.bat`:
 
-0) Shut down your server.  Close any windows that may be open.
-1) Identify the folder which has the backup you want to restore - review the folder timestamp.txt file if needed to confirm date/time of backup
-2) Rename the existing server instance folder (such as c:\rust\server\server1) to a backup name (i.e. Server1-bak)
-3) Copy the Server Instance folder (such as Server1) from the backup folder to your Rust installation Server folder, such as c:\rust\server\
-4) Rename your Oxide folder (such as c:\rust\oxide) to Oxide-bak (c:\rust\oxide-bak)
-5) Copy the backup oxide folder to your rust installation folder (such as c:\rust)
-6) Start up your server.
+```bat
+@set "RustDir=r:\rustserver"
+@set "ServerDir=r:\rustserver\server\server1"
+@set /A D=12
+@set /A W=4
+@set /A C=7
+```
 
-RESTARTING THE SCRIPT
+- `RustDir`: Root folder of the Rust server install.
+- `ServerDir`: Specific server instance folder to back up.
+- `D`: Number of backups per day. The default `12` means every two hours.
+- `W`: Number of days of backup slots to keep.
+- `C`: Backup slot to start with. Use this if restarting the script and you do not want it to begin overwriting slot `1`.
 
-The script makes 1 folder for each backup.  If you restart the script, it will by default start at folder 1, regardless of how many 
-folders you have.  This means it will overwrite backups.  If you want it to start at a specific folder, set the "C" variable to the 
-folder you want to put the first backup in.  The script will finish the rest of the backups, and then start the next run of 
-backups at folder #1.
+Total backup slots are calculated as:
+
+```text
+D * W
+```
+
+## Running
+
+Open a Command Prompt and run:
+
+```bat
+RustBetterBU.bat
+```
+
+The script displays the configured paths and timing before starting. Review those values carefully before continuing.
+
+## Restore Process
+
+1. Stop the Rust server.
+2. Choose the backup folder you want to restore from and check its `TimeStamp.txt`.
+3. Rename the existing live server instance folder, for example `server1` to `server1-bak`.
+4. Copy the backup `Server1` folder into your Rust `server` folder.
+5. Rename the existing live `Oxide` folder, for example `Oxide` to `Oxide-bak`.
+6. Copy the backup `Oxide` folder into your Rust install root.
+7. Start the server and verify it loads correctly.
+
+## Notes And Cautions
+
+- Backup slots are reused. If you need to keep a backup forever, copy it somewhere else before its slot comes around again.
+- The script uses `robocopy /MIR`, which mirrors source folders into each backup slot. This keeps stale deleted files out of restore points, but it also means each backup slot is overwritten to match the current live folder.
+- Test your restore process before relying on the backups during an incident.
