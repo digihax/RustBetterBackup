@@ -1,5 +1,17 @@
 # RustBetterBackup
 
+## Maintenance status
+
+**Archived — November 2026.** No active maintenance or current compatibility
+support is planned. The source and commit history remain available under the
+existing GPL-3.0 license.
+
+This rotating-backup utility is retained for historical reference. It reuses
+backup slots with robocopy /MIR; do not treat it as a tested current backup system.
+
+Review it in a disposable test environment before reuse. This archive is part of
+its development history, not a recommendation for new production deployments.
+
 RustBetterBackup is a Windows batch script for keeping rotating backups of a Rust server instance and its Oxide install folder.
 
 The script is intended for self-hosted Windows Rust servers where the default backup folders are hard to identify or restore from. Each backup slot receives a timestamp file, an `Oxide` copy, and a `Server1` copy so you can restore the server state from a known point in time.
